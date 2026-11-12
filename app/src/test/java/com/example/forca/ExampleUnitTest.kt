@@ -1,4 +1,4 @@
-package com.example.myapplicationaaaaaaaaaaaa
+package com.example.forca
 
 import org.junit.Test
 
