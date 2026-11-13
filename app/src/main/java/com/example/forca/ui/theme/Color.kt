@@ -2,10 +2,13 @@ package com.example.forca.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val pretoEsverdeado = Color(0xFF081919)
+val verdeEscuro = Color(0xFF223330)
+val cinzaEsverdeado = Color(0xFF4D524B)
+val cinzaClaro = Color(0xFF837F78)
+val vermelhoEscuro = Color(0xFF65060E)
+val vermelhoClaro = Color(0xFFCE1A1E)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val textoClaro = Color(0xFFE6E1DC)
+val fundoClaro = Color(0xFFF2EFEA)
+val superficieClara = Color(0xFFE2DED8)
