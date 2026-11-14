@@ -24,7 +24,6 @@ fun TelaInicio(
     onJogar: () -> Unit,
     onAdmin: () -> Unit,
     onJogador: () -> Unit,
-    onRanking: () -> Unit,
     onHistorico: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -58,7 +57,6 @@ fun TelaInicio(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            OutlinedButton(onClick = onRanking) { Text("Ranking") }
             OutlinedButton(onClick = onHistorico) { Text("Histórico") }
             OutlinedButton(onClick = { mostrarTutorial = true }) { Text("Como jogar") }
         }
