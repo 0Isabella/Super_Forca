@@ -55,6 +55,7 @@ private sealed interface Dialogo {
 @Composable
 fun TelaAdmin(
     onVoltar: () -> Unit = {},
+    onAbrirRanking: () -> Unit = {},
     viewModel: AdminViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -74,7 +75,8 @@ fun TelaAdmin(
         topBar = {
             TopAppBar(
                 title = { Text("Administração") },
-                navigationIcon = { TextButton(onClick = onVoltar) { Text("Voltar") } }
+                navigationIcon = { TextButton(onClick = onVoltar) { Text("Voltar") } },
+                actions = { TextButton(onClick = onAbrirRanking) { Text("Ranking") } }
             )
         },
         floatingActionButton = {
