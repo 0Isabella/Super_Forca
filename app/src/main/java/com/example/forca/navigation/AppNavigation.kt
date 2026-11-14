@@ -22,7 +22,6 @@ fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifie
             TelaInicio(
                 onJogar = { navController.navigate(Rotas.jogo) },
                 onAdmin = { navController.navigate(Rotas.admin) },
-                onJogador = {},
                 onHistorico = { navController.navigate(Rotas.historico) }
             )
         }
