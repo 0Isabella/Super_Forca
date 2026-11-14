@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "327303192619",
+    "project_id": "superforca-000",
+    "storage_bucket": "superforca-000.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:327303192619:android:b8e3b454534f6c6aab8a6e",
+        "android_client_info": {
+          "package_name": "com.example.forca"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBoUOeeKR2W3J4470jiAjs7JullFJzJfIU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
