@@ -8,6 +8,6 @@ data class Partida(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val nomeJogador: String,
     val pontuacao: Int,
-    val palavra: String,
+    val tema: String,
     val data: Long = System.currentTimeMillis()
 )
