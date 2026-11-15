@@ -18,6 +18,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -89,6 +90,8 @@ fun TelaJogo(
         if (estado.fase == Fase.ESCOLHENDO_TEMA) {
             EscolherTema(
                 temas = viewModel.temas,
+                carregando = estado.carregando,
+                erro = estado.erro,
                 onTemaEscolhido = { viewModel.iniciarJogo(it, tempoMaxSegundos) }
             )
         } else {
@@ -111,7 +114,12 @@ fun TelaJogo(
 //  Escolha de tema
 // ============================================================
 @Composable
-private fun EscolherTema(temas: List<String>, onTemaEscolhido: (String) -> Unit) {
+private fun EscolherTema(
+    temas: List<String>,
+    carregando: Boolean,
+    erro: String?,
+    onTemaEscolhido: (String) -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -119,14 +127,29 @@ private fun EscolherTema(temas: List<String>, onTemaEscolhido: (String) -> Unit)
     ) {
         Text("ESCOLHA UM TEMA", fontSize = 26.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(24.dp))
+
+        if (erro != null) {
+            Text(
+                text = erro,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(16.dp))
+        }
+
         temas.forEach { tema ->
             Button(
                 onClick = { onTemaEscolhido(tema) },
+                enabled = !carregando,
                 modifier = Modifier.fillMaxWidth(0.7f).height(56.dp)
             ) {
                 Text(tema.uppercase(), fontSize = 18.sp)
             }
             Spacer(Modifier.height(12.dp))
+        }
+
+        if (carregando) {
+            CircularProgressIndicator()
         }
     }
 }

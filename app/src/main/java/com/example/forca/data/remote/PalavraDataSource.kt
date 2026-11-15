@@ -1,4 +1,3 @@
-
 package com.example.forca.data.remote
 
 import com.example.forca.data.model.Palavra
@@ -10,32 +9,20 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
-// Fonte local utilizada pelo jogo.
-class PalavraDataSource {
-
-    fun carregarPalavras(): Map<String, List<String>> = mapOf(
-        "Alimentos" to listOf(
-            "PIZZA", "BANANA", "CHOCOLATE", "ARROZ", "FEIJAO",
-            "MELANCIA", "SORVETE", "QUEIJO", "MACARRAO", "BOLO"
-        ),
-        "Animais" to listOf(
-            "GATO", "CACHORRO", "ELEFANTE", "GIRAFA", "TARTARUGA",
-            "PINGUIM", "COELHO", "LEAO", "MACACO", "BORBOLETA"
-        ),
-        "Objetos" to listOf(
-            "CADEIRA", "TELEFONE", "MOCHILA", "CANETA", "RELOGIO",
-            "GARFO", "LAMPADA", "TESOURA", "ESPELHO", "JANELA"
-        )
-    )
-}
-
-// Fonte remota utilizada pela administração.
+// Fonte de palavras: Firestore (usada pelo jogo e pela administração).
 class PalavraFirestoreDataSource(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
     private fun colecao(tema: Tema): CollectionReference =
         db.collection(tema.colecao)
 
+    /** Busca uma vez só os textos das palavras do tema (usado pelo jogo). */
+    suspend fun buscar(tema: Tema): List<String> =
+        colecao(tema).get().await()
+            .documents
+            .mapNotNull { it.getString("texto") }
+
+    /** Acompanha a lista em tempo real (usado pela tela Admin). */
     fun observar(tema: Tema): Flow<List<Palavra>> = callbackFlow {
         val listener = colecao(tema)
             .orderBy("texto")
