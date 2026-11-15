@@ -3,6 +3,7 @@ package com.example.forca.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.forca.data.repository.PalavraRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +36,9 @@ data class JogoUiState(
     val pontos: Int = 0,
     val tempoRestante: Int = TEMPO_PADRAO_SEGUNDOS,
     val aguardandoProxima: Boolean = false,   // pausa curta após acertar a palavra
-    val motivoFim: MotivoFim? = null
+    val motivoFim: MotivoFim? = null,
+    val carregando: Boolean = false,          // buscando as palavras no Firestore
+    val erro: String? = null                  // falha ao buscar / tema sem palavras
 ) {
     /** Quantas partes do corpo já aparecem (0 a 6). */
     val erros: Int get() = MAX_TENTATIVAS - tentativasRestantes
@@ -58,19 +61,36 @@ class JogoViewModel : ViewModel() {
 
     /** Começa uma partida nova no [tema] escolhido. */
     fun iniciarJogo(tema: String, tempoSegundos: Int = TEMPO_PADRAO_SEGUNDOS) {
+        if (_uiState.value.carregando) return // evita toque duplo enquanto busca
         cronometro?.cancel()
-        palavras = repository.sortearPalavras(tema, PALAVRAS_POR_PARTIDA)
-        if (palavras.isEmpty()) return
+        _uiState.value = JogoUiState(carregando = true)
 
-        _uiState.value = JogoUiState(
-            fase = Fase.JOGANDO,
-            tema = tema,
-            palavraAtual = palavras[0],
-            numeroPalavra = 1,
-            totalPalavras = palavras.size,
-            tempoRestante = tempoSegundos
-        )
-        iniciarCronometro()
+        viewModelScope.launch {
+            val sorteadas = try {
+                repository.sortearPalavras(tema, PALAVRAS_POR_PARTIDA)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _uiState.value = JogoUiState(erro = "Erro ao carregar palavras: ${e.message}")
+                return@launch
+            }
+
+            if (sorteadas.isEmpty()) {
+                _uiState.value = JogoUiState(erro = "Nenhuma palavra cadastrada em $tema.")
+                return@launch
+            }
+
+            palavras = sorteadas
+            _uiState.value = JogoUiState(
+                fase = Fase.JOGANDO,
+                tema = tema,
+                palavraAtual = palavras[0],
+                numeroPalavra = 1,
+                totalPalavras = palavras.size,
+                tempoRestante = tempoSegundos
+            )
+            iniciarCronometro()
+        }
     }
 
     /** Chamado quando o jogador toca numa tecla do teclado. */
