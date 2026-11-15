@@ -1,6 +1,6 @@
 # 🎯 Super Forca
 
-Jogo da forca para **Android**, feito em **Kotlin** com **Jetpack Compose**. O jogador escolhe um tema, tenta descobrir 5 palavras contra o relógio, salva a pontuação com suas iniciais e disputa um ranking local. Há também uma área de **administração** para gerenciar palavras (Firebase Firestore) e o ranking.
+Jogo da forca para **Android**, feito em **Kotlin** com **Jetpack Compose**. O jogador escolhe um tema, tenta descobrir 5 palavras contra o relógio, salva a pontuação com suas iniciais e disputa um ranking local. As palavras ficam na nuvem (**Firebase Firestore**) e podem ser gerenciadas pela área de **administração** do próprio app, que também permite editar o ranking.
 
 ---
 
@@ -11,6 +11,7 @@ Jogo da forca para **Android**, feito em **Kotlin** com **Jetpack Compose**. O j
 - [Como jogar](#-como-jogar)
 - [Regras do jogo](#-regras-do-jogo)
 - [Tecnologias](#-tecnologias)
+- [Prints das telas](#-prints-das-telas)
 - [Como rodar o projeto](#-como-rodar-o-projeto)
 - [Como o projeto funciona](#-como-o-projeto-funciona)
 - [Estrutura de pastas](#-estrutura-de-pastas)
@@ -29,19 +30,21 @@ Ao final, o jogador registra **até 4 letras** (estilo fliperama) e sua pontuaç
 ## ✨ Funcionalidades
 
 - 🎮 **Jogo** com 3 temas: *Alimentos*, *Animais* e *Objetos*
+- ☁️ **Palavras na nuvem**: o jogo sorteia as palavras direto do Firestore, as mesmas que a tela Admin edita
+- 🔄 **Indicador de carregamento** e mensagens de erro ao buscar as palavras
 - ⏱️ **Cronômetro** de 120 segundos por partida
 - 🧍 **Boneco da forca** que vai sendo desenhado a cada erro (6 partes)
 - ⌨️ **Teclado virtual** na tela, com letras certas e erradas destacadas
 - 🏆 **Ranking** ordenado por pontuação, com destaque para o 1º lugar
 - 📜 **Histórico** de partidas por data, com busca por nome
-- 🛠️ **Admin de palavras**: adicionar, editar e excluir palavras de cada tema (Firestore)
+- 🛠️ **Admin de palavras**: adicionar, editar e excluir palavras de cada tema (as mudanças valem para as próximas partidas)
 - 🥇 **Admin de ranking**: editar pontuações e remover partidas
 - ❓ **Tutorial** "Como jogar" na tela inicial
 
 ## 🕹️ Como jogar
 
 1. Na tela inicial, toque em **Jogar**.
-2. Escolha um **tema**.
+2. Escolha um **tema** (o app busca as palavras na internet; aguarde o indicador de carregamento).
 3. Toque nas letras do teclado para tentar descobrir a palavra.
 4. Ao acertar uma palavra, ganha pontos e passa para a próxima (as tentativas voltam ao máximo).
 5. A partida termina quando:
@@ -77,6 +80,10 @@ Esses valores ficam em `JogoViewModel.kt` e podem ser alterados facilmente (veja
 
 **Versões do Android:** `minSdk 24` (Android 7.0) · `targetSdk / compileSdk 37`
 
+## 🖼️ Prints das telas
+
+As capturas de tela do app estão no arquivo [`Prints Jogo da Forca.pdf`](Prints%20Jogo%20da%20Forca.pdf), na raiz do repositório.
+
 ## 🚀 Como rodar o projeto
 
 ### Pré-requisitos
@@ -85,7 +92,7 @@ Esses valores ficam em `JogoViewModel.kt` e podem ser alterados facilmente (veja
 - **JDK** compatível com o Gradle do projeto (o Android Studio já inclui um; o projeto está configurado para o toolchain JDK 25 — o Gradle tenta baixá-lo automaticamente)
 - **Android SDK 37** instalado (pelo SDK Manager do Android Studio)
 - Um **emulador** (AVD) ou um **celular Android** com depuração USB ativada
-- **Conexão com a internet** na primeira execução (para baixar dependências do Gradle e, no app, para a tela de Admin de palavras)
+- **Conexão com a internet**: para baixar as dependências do Gradle e também para **jogar**, já que as palavras de cada partida são buscadas no Firestore
 
 ### Passo a passo
 
@@ -157,7 +164,7 @@ Definida em `navigation/AppNavigation.kt`, com uma barra inferior (**Início · 
 
 ### Fluxo de uma partida (`JogoViewModel`)
 
-1. O jogador escolhe um tema → `iniciarJogo(tema)` sorteia 5 palavras (embaralhadas) e inicia o cronômetro.
+1. O jogador escolhe um tema → `iniciarJogo(tema)` mostra o estado de *carregando*, busca as palavras do tema no Firestore, sorteia 5 (embaralhadas) e só então inicia o cronômetro. Se a busca falhar, ou o tema não tiver palavras cadastradas, a tela de temas exibe uma mensagem de erro.
 2. A cada letra tocada, `tentarLetra(letra)`:
    - **Acerto:** a letra é revelada; se a palavra for completada, soma 100 pontos, mostra a palavra por ~0,8 s e avança para a próxima.
    - **Erro:** perde uma tentativa e uma parte do boneco aparece; com 0 tentativas o jogo termina.
@@ -180,7 +187,7 @@ O estado da partida é um único objeto imutável (`JogoUiState`) exposto por `S
 
 O ranking é a mesma tabela ordenada por `pontuacao DESC`; o histórico, por `data DESC`.
 
-**Remoto (Firestore) — palavras da administração.** Uma coleção por tema, cada documento com o campo `texto`:
+**Remoto (Firestore) — palavras do jogo e da administração.** Uma coleção por tema, cada documento com o campo `texto`. O jogo faz uma busca única ao iniciar a partida (`buscar`), e a tela Admin acompanha a lista em tempo real (`observar`):
 
 | Tema | Coleção |
 |---|---|
@@ -188,7 +195,7 @@ O ranking é a mesma tabela ordenada por `pontuacao DESC`; o histórico, por `da
 | Animais | `palavras_animais` |
 | Objetos | `palavras_objetos` |
 
-Na tela Admin, as listas são atualizadas **em tempo real** (snapshot listener). As palavras passam por validação e normalização: convertidas para MAIÚSCULAS, sem acentos (`FEIJÃO → FEIJAO`), sem espaços, apenas letras, **máximo 10 letras** e sem duplicatas no mesmo tema.
+Como jogo e Admin usam as mesmas coleções, **uma palavra adicionada, editada ou excluída na Admin passa a valer na próxima partida**. As palavras passam por validação e normalização: convertidas para MAIÚSCULAS, sem acentos (`FEIJÃO → FEIJAO`), sem espaços, apenas letras, **máximo 10 letras** e sem duplicatas no mesmo tema.
 
 ## 🗂️ Estrutura de pastas
 
@@ -205,7 +212,7 @@ app/src/main/java/com/example/forca/
 └── data/
     ├── model/                   # Tema, Palavra
     ├── local/                   # Room: AppDatabase, Partida, PartidaDao
-    ├── remote/                  # PalavraDataSource (lista local) e Firestore
+    ├── remote/                  # PalavraFirestoreDataSource (acesso ao Firestore)
     └── repository/              # Repositories usados pelos ViewModels
 ```
 
@@ -220,35 +227,26 @@ Se quiser usar o **seu próprio** projeto Firebase (por exemplo, ao fazer um for
 3. Baixe o `google-services.json` e substitua o arquivo em `app/google-services.json`.
 4. No console, abra **Firestore Database** e crie o banco.
 5. Ajuste as **regras de segurança** para permitir leitura/escrita nas coleções `palavras_*` (durante o desenvolvimento, o modo de teste serve; em produção, restrinja o acesso).
+6. **Cadastre as palavras.** O app não traz palavras embutidas: crie-as pela tela **Admin** do app ou direto no console, nas coleções `palavras_alimentos`, `palavras_animais` e `palavras_objetos`, com documentos no formato `{ "texto": "PIZZA" }`. Recomenda-se **pelo menos 5 palavras por tema**; com menos, a partida terá menos rodadas.
 
-> ⚠️ Se as regras do Firestore bloquearem o acesso, a tela **Admin** exibirá mensagens de erro ao carregar ou salvar palavras. O jogo em si continua funcionando, pois não depende do Firestore.
+> ⚠️ O **jogo depende do Firestore**. Sem internet, com regras que bloqueiem o acesso ou com um tema sem palavras, a partida não inicia e a tela de temas mostra uma mensagem de erro (por exemplo, *"Nenhuma palavra cadastrada em Animais."*).
 
 ## 🎛️ Personalizando o jogo
 
 | O que alterar | Onde |
 |---|---|
 | Tentativas, pontos, tempo e nº de palavras | constantes no topo de `viewmodel/JogoViewModel.kt` |
-| Palavras usadas no jogo | `PalavraDataSource` em `data/remote/PalavraDataSource.kt` |
-| Adicionar um novo tema | enum `Tema` (para a Admin) e mapa em `PalavraDataSource` (para o jogo) |
+| Palavras usadas no jogo | tela **Admin** do app ou coleções `palavras_*` no console do Firestore |
+| Adicionar um novo tema | novo item no enum `Tema` (`data/model/Tema.kt`), com título e nome da coleção; ele passa a aparecer no jogo e na Admin |
 | Limite de letras de uma palavra | `MAX_LETRAS_PALAVRA` em `data/model/Palavra.kt` |
 | Cores | `ui/theme/Color.kt` |
 
 ## ⚠️ Limitações conhecidas
 
-- **As palavras do jogo vêm de uma lista fixa no código** (`PalavraDataSource`, 10 palavras por tema). As palavras cadastradas na tela Admin ficam no Firestore, mas **ainda não são usadas nas partidas**. A camada `PalavraRepository` foi preparada para essa troca de fonte de dados.
+- **O jogo exige internet** (e um Firestore com palavras cadastradas), pois não há lista de palavras offline.
 - A área **Admin não tem autenticação**: qualquer pessoa com o app pode acessá-la.
 - O **ranking é local**: cada aparelho tem o seu, não há ranking online.
 - O banco Room usa `fallbackToDestructiveMigration`: ao mudar a versão do esquema, os dados salvos são apagados.
 - `TelaTutorial` ainda é uma versão simples (um diálogo com texto curto).
-
-## 👥 Contribuindo
-
-1. Faça um fork do projeto
-2. Crie uma branch: `git checkout -b minha-feature`
-3. Faça o commit: `git commit -m "Adiciona minha feature"`
-4. Envie: `git push origin minha-feature`
-5. Abra um Pull Request
-
----
 
 Feito com 💚 em Kotlin e Jetpack Compose.
